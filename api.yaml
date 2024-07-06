@@ -1,0 +1,167 @@
+openapi: 3.0.0
+info:
+  title: Email and JSON Processing API
+  version: 1.0.0
+  description: API for processing emails and transforming JSON data based on SES notifications.
+
+servers:
+  - url: http://localhost:3000
+
+paths:
+  /emailJson:
+    get:
+      summary: Retrieve email data from a file
+      parameters:
+        - in: query
+          name: path
+          schema:
+            type: string
+          required: true
+          description: The path to the email file.
+          example: 'http://localhost:3000/emailJson?path=/Users/luisbonilla/Downloads/Test json.eml'
+      responses:
+        '200':
+          description: Email data successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+        '400':
+          description: Bad request
+
+  /jsonTransformer:
+    post:
+      summary: Process JSON data from SES notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SESNotificationModel'
+      responses:
+        '200':
+          description: JSON successfully processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonTransformerResponse'
+        '400':
+          description: Invalid input
+
+components:
+  schemas:
+    SESNotificationModel:
+      type: object
+      properties:
+        Records:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecordsModel'
+
+    RecordsModel:
+      type: object
+      properties:
+        eventVersion:
+          type: string
+        ses:
+          $ref: '#/components/schemas/SESModel'
+        eventSource:
+          type: string
+
+    SESModel:
+      type: object
+      properties:
+        receipt:
+          $ref: '#/components/schemas/ReceiptModel'
+        mail:
+          $ref: '#/components/schemas/MailModel'
+
+    ReceiptModel:
+      type: object
+      properties:
+        timestamp:
+          type: string
+        processingTimeMillis:
+          type: integer
+        recipients:
+          type: array
+          items:
+            type: string
+        spamVerdict:
+          $ref: '#/components/schemas/VerdictModel'
+        virusVerdict:
+          $ref: '#/components/schemas/VerdictModel'
+        spfVerdict:
+          $ref: '#/components/schemas/VerdictModel'
+        dkimVerdict:
+          $ref: '#/components/schemas/VerdictModel'
+        dmarcVerdict:
+          $ref: '#/components/schemas/VerdictModel'
+        dmarcPolicy:
+          type: string
+        action:
+          $ref: '#/components/schemas/ActionModel'
+
+    MailModel:
+      type: object
+      properties:
+        timestamp:
+          type: string
+        source:
+          type: string
+        messageId:
+          type: string
+        destination:
+          type: array
+          items:
+            type: string
+        headersTruncated:
+          type: boolean
+        headers:
+          type: array
+          items:
+            type: object
+        commonHeaders:
+          type: object
+
+    VerdictModel:
+      type: object
+      properties:
+        status:
+          type: string
+
+    ActionModel:
+      type: object
+      properties:
+        type:
+          type: string
+        topicArn:
+          type: string
+
+    JsonTransformerResponse:
+      type: object
+      properties:
+        spam:
+          type: string
+          example: "spamVerdict a boolean, PASS = true: true"
+        virus:
+          type: string
+          example: "virusVerdict a boolean, PASS = true: true"
+        dns:
+          type: string
+          example: "spfVerdict, dkimVerdict, dmarcVerdict a boolean, si todos PASS = true: true"
+        mes:
+          type: string
+          example: "septiembre"
+        retrasado:
+          type: string
+          example: "processingTimeMillis > 1000 = true: false"
+        emisor:
+          type: string
+          example: "61967230-7A45-4A9D-BEC9-87CBCF2211C9@example.com"
+        receptor:
+          type: string
+          example: ",test@example.com"
